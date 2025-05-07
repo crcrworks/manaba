@@ -1,8 +1,8 @@
 [workspace]
 members = ["crates/*"]
+resolver = "3"
 
 [workspace.package]
-name = "manaba"
 authors = ["CRCR"]
 edition = "2024"
 repository = "https://github.com/crcrworks/manaba"
