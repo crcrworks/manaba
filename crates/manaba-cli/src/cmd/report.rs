@@ -1,7 +1,7 @@
 use crate::error::Result;
 use colored_text::Colorize;
 use manaba_sdk::{
-    Client,
+    Client, Report,
     assignment::{AssignmentDate, AssignmentImportanceLevel, AssignmentState},
 };
 
@@ -16,12 +16,16 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
             .filter(|report| {
                 if should_show_warn {
                     return matches!(
-                        report.due_date,
-                        Some(AssignmentDate {
-                            importance_level: AssignmentImportanceLevel::High
-                                | AssignmentImportanceLevel::Medium,
+                        report,
+                        Report {
+                            state: AssignmentState::Todo,
+                            due_date: Some(AssignmentDate {
+                                importance_level: AssignmentImportanceLevel::High
+                                    | AssignmentImportanceLevel::Medium,
+                                ..
+                            }),
                             ..
-                        })
+                        }
                     );
                 }
 

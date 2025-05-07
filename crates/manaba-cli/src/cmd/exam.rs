@@ -1,7 +1,7 @@
 use crate::error::Result;
 use colored_text::Colorize;
 use manaba_sdk::{
-    Client,
+    Client, Exam,
     assignment::{AssignmentDate, AssignmentImportanceLevel, AssignmentState},
 };
 
@@ -16,12 +16,16 @@ pub async fn exam(client: &Client, should_show_all: bool, should_show_warn: bool
             .filter(|exam| {
                 if should_show_warn {
                     return matches!(
-                        exam.due_date,
-                        Some(AssignmentDate {
-                            importance_level: AssignmentImportanceLevel::High
-                                | AssignmentImportanceLevel::Medium,
+                        exam,
+                        Exam {
+                            state: AssignmentState::Todo,
+                            due_date: Some(AssignmentDate {
+                                importance_level: AssignmentImportanceLevel::High
+                                    | AssignmentImportanceLevel::Medium,
+                                ..
+                            }),
                             ..
-                        })
+                        }
                     );
                 }
 
