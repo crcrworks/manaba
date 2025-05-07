@@ -18,7 +18,8 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
                     return matches!(
                         report.due_date,
                         Some(AssignmentDate {
-                            importance_level: AssignmentImportanceLevel::High,
+                            importance_level: AssignmentImportanceLevel::High
+                                | AssignmentImportanceLevel::Medium,
                             ..
                         })
                     );
