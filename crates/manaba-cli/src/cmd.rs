@@ -16,23 +16,31 @@ struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    /// Open manaba page in browser
     Browse,
+    /// show manaba-cli config path
     ConfigPath,
+    /// List reports
     Report {
         #[arg(short, long)]
         all: bool,
+        /// filter by approaching deadlines
         #[arg(short, long)]
         warn: bool,
     },
+    /// List exams
     Exam {
         #[arg(short, long)]
         all: bool,
+        /// filter by approaching deadlines
         #[arg(short, long)]
         warn: bool,
     },
+    /// List assignment include reports and exams
     Check {
         #[arg(short, long)]
         all: bool,
+        /// filter by approaching deadlines
         #[arg(short, long)]
         warn: bool,
     },
