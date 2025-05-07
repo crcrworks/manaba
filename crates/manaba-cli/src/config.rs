@@ -1,20 +1,19 @@
 use crate::error::{Error, Result};
-use dialoguer::Confirm;
-use manaba_sdk::Cookie;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 
-const BASE_URL: &str = "https://ct.ritsumei.ac.jp/ct/";
-const COOKIE_DOMAIN: &str = "ct.ritsumei.ac.jp";
+const DEFAULT_BASE_URL: &str = "https://ct.ritsumei.ac.jp/ct/";
+const DEFAULT_COOKIE_DOMAIN: &str = "ct.ritsumei.ac.jp";
+
+// TODO: Support TimeTable
 const TIMETABLE: &str = "";
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
     pub base_url: String,
     pub cookie_domain: String,
-    pub cookie: Cookie,
     pub timetable: String,
 }
 
@@ -34,22 +33,6 @@ impl Config {
             toml::from_str(&config_string).map_err(|e| Error::TomlParse(e.to_string()))?;
 
         Ok(content)
-    }
-
-    pub async fn update_cookie(&mut self) -> Result<()> {
-        Confirm::new()
-            .with_prompt("Enter to load new cookie")
-            .interact()
-            .unwrap();
-
-        let cookie = Cookie::load(&self.cookie_domain)?;
-
-        let mut current_config = Self::from_file().await?;
-        current_config.cookie = cookie.clone();
-        current_config.save_to_file().await?;
-        self.cookie = cookie;
-
-        Ok(())
     }
 
     pub async fn save_to_file(self) -> Result<()> {
@@ -80,9 +63,8 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            base_url: BASE_URL.to_owned(),
-            cookie_domain: COOKIE_DOMAIN.to_owned(),
-            cookie: Default::default(),
+            base_url: DEFAULT_BASE_URL.to_owned(),
+            cookie_domain: DEFAULT_COOKIE_DOMAIN.to_owned(),
             timetable: TIMETABLE.to_owned(),
         }
     }

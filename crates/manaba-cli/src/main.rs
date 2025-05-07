@@ -4,9 +4,8 @@ mod error;
 
 use clap::{Parser, Subcommand};
 use config::Config;
-use dialoguer::Confirm;
 use error::{Error, Result};
-use manaba_sdk::Client;
+use manaba_sdk::{Client, Cookie};
 
 #[derive(Parser)]
 struct Cli {
@@ -87,25 +86,11 @@ pub async fn config() -> Result<Config> {
 }
 
 pub async fn client(config: &mut Config) -> Result<Client> {
-    let client = loop {
-        match Client::new(&config.base_url, &config.cookie).await {
-            Ok(v) => break v,
-            Err(_) => {
-                eprintln!("Cookie is invalid");
-                let confirmation = Confirm::new()
-                    .with_prompt("Open manaba page to load new cookie?")
-                    .interact()
-                    .unwrap();
-
-                if !confirmation {
-                    panic!("Failed to recognize valid cookie")
-                }
-
-                eprintln!("Opening manaba page...");
-                opener::open(&config.base_url)?;
-                config.update_cookie().await?;
-                continue;
-            }
+    let cookie = Cookie::load(&config.cookie_domain)?;
+    let client = match Client::new(&config.base_url, &cookie).await {
+        Ok(client) => client,
+        Err(_) => {
+            panic!("Cookie is invalid");
         }
     };
 
