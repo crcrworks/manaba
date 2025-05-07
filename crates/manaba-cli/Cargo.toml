@@ -1,0 +1,28 @@
+[package]
+name = "manaba-cli"
+description = "manaba for CLI"
+version = "0.3.5"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+manaba-sdk = { path = "../manaba-sdk/", version = "0.2.1" }
+tokio = { version = "1.44.2", features = ["full"] }
+dotenvy = "0.15.7"
+clap = { version = "4.5.37", features = ["derive"] }
+opener = "0.7.2"
+aes-gcm = "0.10"
+dirs = "6.0.0"
+rookie = "0.5.6"
+eyre = "0.6.12"
+toml = "0.8.21"
+thiserror = "2.0.12"
+dialoguer = "0.11.0"
+colored_text = "0.3.0"
+serde.workspace = true
+
+[[bin]]
+name = "manaba"
+path = "src/main.rs"

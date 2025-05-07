@@ -1,0 +1,18 @@
+[package]
+name = "manaba-sdk"
+description = "Get information from manaba"
+version = "0.2.1"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+reqwest = { version = "0.12.15", features = ["cookies", "blocking"] }
+scraper = "0.23.1"
+tokio = { version = "1.44.2", features = ["full"] }
+dotenvy = "0.15.7"
+chrono = "0.4.40"
+thiserror = "2.0.12"
+rookie = "0.5.6"
+serde.workspace = true

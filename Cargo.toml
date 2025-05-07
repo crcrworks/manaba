@@ -1,0 +1,12 @@
+[workspace]
+members = ["crates/*"]
+
+[workspace.package]
+name = "manaba"
+authors = ["CRCR"]
+edition = "2024"
+repository = "https://github.com/crcrworks/manaba"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1.0.219", features = ["derive"] }
