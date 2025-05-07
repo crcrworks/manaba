@@ -19,43 +19,49 @@ pub enum Commands {
     Browse,
     ConfigPath,
     Report {
-        #[arg(long)]
+        #[arg(short, long)]
         all: bool,
+        #[arg(short, long)]
+        warn: bool,
     },
     Exam {
-        #[arg(long)]
+        #[arg(short, long)]
         all: bool,
+        #[arg(short, long)]
+        warn: bool,
     },
     Check {
-        #[arg(long)]
+        #[arg(short, long)]
         all: bool,
+        #[arg(short, long)]
+        warn: bool,
     },
 }
 
 pub async fn cmd() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Report { all } => {
+        Commands::Report { all, warn } => {
             let mut config = config().await?;
             let client = client(&mut config).await?;
-            report::report(&client, all).await?;
+            report::report(&client, all, warn).await?;
         }
 
-        Commands::Exam { all } => {
+        Commands::Exam { all, warn } => {
             let mut config = config().await?;
             let client = client(&mut config).await?;
-            exam(&client, all).await?;
+            exam(&client, all, warn).await?;
         }
 
-        Commands::Check { all } => {
+        Commands::Check { all, warn } => {
             let mut config = config().await?;
             let client = client(&mut config).await?;
 
-            println!("=====Report\n");
-            report(&client, all).await?;
+            println!("===== Report\n");
+            report(&client, all, warn).await?;
 
-            println!("=====Exam\n");
-            exam(&client, all).await?;
+            println!("===== Exam\n");
+            exam(&client, all, warn).await?;
         }
 
         Commands::Browse => {

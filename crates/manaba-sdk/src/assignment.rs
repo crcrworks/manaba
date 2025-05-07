@@ -12,7 +12,7 @@ pub struct AssignmentDate {
     pub importance_level: AssignmentImportanceLevel,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AssignmentImportanceLevel {
     None,
     Low,

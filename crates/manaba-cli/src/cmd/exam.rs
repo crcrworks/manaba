@@ -5,20 +5,32 @@ use manaba_sdk::{
     assignment::{AssignmentDate, AssignmentImportanceLevel, AssignmentState},
 };
 
-pub async fn exam(client: &Client, all: bool) -> Result<()> {
+pub async fn exam(client: &Client, should_show_all: bool, should_show_warn: bool) -> Result<()> {
     let courses = client.get_courses().await?;
 
     for course in courses {
         let exams = client.get_exams(&course).await?;
 
-        let exams = if all {
-            exams
-        } else {
-            exams
-                .into_iter()
-                .filter(|report| report.state == AssignmentState::Todo)
-                .collect::<Vec<_>>()
-        };
+        let exams = exams
+            .into_iter()
+            .filter(|exam| {
+                if should_show_warn {
+                    return matches!(
+                        exam.due_date,
+                        Some(AssignmentDate {
+                            importance_level: AssignmentImportanceLevel::High,
+                            ..
+                        })
+                    );
+                }
+
+                if should_show_all {
+                    true
+                } else {
+                    exam.state == AssignmentState::Todo
+                }
+            })
+            .collect::<Vec<_>>();
 
         if exams.is_empty() {
             continue;
@@ -31,7 +43,7 @@ pub async fn exam(client: &Client, all: bool) -> Result<()> {
 
             match report.state {
                 AssignmentState::Todo => {
-                    if all {
+                    if should_show_all {
                         print!("{}", "[TODO]".red());
                     }
                 }
