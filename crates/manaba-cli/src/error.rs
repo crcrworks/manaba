@@ -5,21 +5,24 @@ pub enum Error {
     #[error("Config file not found")]
     ConfigFileNotFound,
 
-    #[error("Failed to open browser")]
+    #[error("{0}")]
     OpenBrowserFailed(#[from] opener::OpenError),
 
-    #[error("IO error: {0}")]
+    #[error("{0}")]
     Io(#[from] std::io::Error),
 
     #[error("Failed to load : {0}")]
     TomlParse(String),
 
-    #[error("Failed to save config file : {0}")]
+    #[error("Failed to save config file: {0}")]
     SaveConfigFile(std::io::Error),
 
-    #[error("Failed to load Cookie: {0}")]
+    #[error("{0}")]
     TokioTaskJoin(#[from] tokio::task::JoinError),
 
-    #[error("Manaba error occured")]
+    #[error("Failed to manage config file: {0}")]
+    ManageConfig(String),
+
+    #[error("{0}")]
     Manaba(#[from] manaba_sdk::error::ManabaError),
 }
