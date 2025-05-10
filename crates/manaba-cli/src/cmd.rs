@@ -9,7 +9,7 @@ use manaba_sdk::assignment::AssignmentDate;
 use manaba_sdk::assignment::{AssignmentImportanceLevel, AssignmentReceptibleState};
 use report::report;
 
-pub(super) const INDENT: &str = "   ";
+const INDENT: &str = "   ";
 
 #[derive(Parser)]
 struct Cli {
@@ -18,7 +18,7 @@ struct Cli {
 }
 
 #[derive(Subcommand)]
-pub enum Commands {
+enum Commands {
     /// Open manaba page in browser
     Browse,
     /// show manaba-cli config path
@@ -88,7 +88,7 @@ pub async fn cmd() -> Result<()> {
     Ok(())
 }
 
-pub(super) fn colorize<T: std::fmt::Display>(
+fn colorize<T: std::fmt::Display>(
     text: T,
     receptiable_state: &AssignmentReceptibleState,
     importance_level: &AssignmentImportanceLevel,
@@ -108,7 +108,7 @@ pub(super) fn colorize<T: std::fmt::Display>(
     }
 }
 
-pub(super) fn colorize_bg<T: std::fmt::Display>(
+fn colorize_bg<T: std::fmt::Display>(
     text: T,
     receptiable_state: &AssignmentReceptibleState,
     importance_level: &AssignmentImportanceLevel,
@@ -128,6 +128,6 @@ pub(super) fn colorize_bg<T: std::fmt::Display>(
     }
 }
 
-pub(super) fn date_as_str(report_date: &AssignmentDate) -> String {
+fn date_as_str(report_date: &AssignmentDate) -> String {
     report_date.date.format("%Y-%m-%d %H:%M").to_string()
 }
