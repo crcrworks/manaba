@@ -1,8 +1,13 @@
-use crate::error::Result;
+use crate::{
+    cmd::{INDENT, colorize, colorize_bg, date_as_str},
+    error::Result,
+};
 use colored_text::Colorize;
 use manaba_sdk::{
     Client, Report,
-    assignment::{AssignmentDate, AssignmentImportanceLevel, AssignmentState},
+    assignment::{
+        AssignmentDate, AssignmentImportanceLevel, AssignmentReceptibleState, AssignmentSubmitState,
+    },
 };
 
 pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bool) -> Result<()> {
@@ -14,11 +19,16 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
         let reports = reports
             .into_iter()
             .filter(|report| {
+                if should_show_all {
+                    return true;
+                }
+
                 if should_show_warn {
                     return matches!(
                         report,
                         Report {
-                            state: AssignmentState::Todo,
+                            submit_state: AssignmentSubmitState::Todo,
+                            receptiable_state: AssignmentReceptibleState::Open,
                             due_date: Some(AssignmentDate {
                                 importance_level: AssignmentImportanceLevel::High
                                     | AssignmentImportanceLevel::Medium,
@@ -29,11 +39,14 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
                     );
                 }
 
-                if should_show_all {
-                    true
-                } else {
-                    report.state == AssignmentState::Todo
-                }
+                matches!(
+                    report,
+                    Report {
+                        submit_state: AssignmentSubmitState::Todo,
+                        receptiable_state: AssignmentReceptibleState::Open,
+                        ..
+                    }
+                )
             })
             .collect::<Vec<_>>();
 
@@ -41,59 +54,72 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
             continue;
         }
 
-        println!("{}", course.title.blue().bold());
+        println!("{}", course.title.black().bold().on_blue());
 
         for report in reports {
-            print!("  - ");
+            let header_str = {
+                let status_str = if should_show_all {
+                    match report {
+                        Report {
+                            receptiable_state: AssignmentReceptibleState::NotStarted,
+                            ..
+                        } => " WAITING ".black().on_white(),
 
-            match report.state {
-                AssignmentState::Todo => {
-                    if should_show_all {
-                        print!("{}", "[TODO]".red());
+                        Report {
+                            submit_state: AssignmentSubmitState::Todo,
+                            receptiable_state: AssignmentReceptibleState::Open,
+                            ..
+                        } => " TODO ".black().on_red(),
+
+                        Report {
+                            submit_state: AssignmentSubmitState::Done,
+                            receptiable_state:
+                                AssignmentReceptibleState::Closed | AssignmentReceptibleState::Open,
+                            ..
+                        } => " DONE ".cyan().on_white(),
+
+                        _ => " CLOSED ".black().on_white(),
                     }
-                }
-                AssignmentState::Done => {
-                    print!("{}", "[DONE]".green());
-                }
-            }
+                } else if let Some(due_date) = &report.due_date {
+                    colorize_bg(" ", &report.receptiable_state, &due_date.importance_level)
+                } else {
+                    String::new()
+                };
 
-            println!(" {}", report.title);
+                let title_str = format!(" {} ", report.title);
 
-            if let Some(start_date) = &report.start_date {
-                print!("    開始: ");
-                print!("{}", start_date.date);
-                println!();
-            }
+                format!("{INDENT}{}{}", status_str, title_str.on_black())
+            };
+
+            let start_date_str = report
+                .start_date
+                .as_ref()
+                .map_or(String::new(), date_as_str);
+
+            let due_date_str = report.due_date.as_ref().map_or(String::new(), date_as_str);
+
+            let content = format!(
+                "{INDENT}{INDENT}開始: {}\n{INDENT}{INDENT}締切: {}",
+                start_date_str, due_date_str
+            );
 
             if let Some(due_date) = &report.due_date {
-                print!("    締切: ");
-                print_report_date(due_date)?;
-                println!();
+                println!(
+                    "{}\n{}",
+                    header_str,
+                    colorize(
+                        content,
+                        &report.receptiable_state,
+                        &due_date.importance_level
+                    )
+                );
+            } else {
+                println!("{}\n{}", header_str, content);
             }
         }
 
         println!();
     }
 
-    Ok(())
-}
-
-fn print_report_date(report_date: &AssignmentDate) -> Result<()> {
-    let date_string = report_date.date.format("%Y-%m-%d %H:%M").to_string();
-
-    match report_date.importance_level {
-        AssignmentImportanceLevel::High => {
-            print!("{}", date_string.red());
-        }
-        AssignmentImportanceLevel::Medium => {
-            print!("{}", date_string.yellow());
-        }
-        AssignmentImportanceLevel::Low => {
-            print!("{}", date_string.cyan());
-        }
-        AssignmentImportanceLevel::None => {
-            print!("{}", date_string);
-        }
-    }
     Ok(())
 }
