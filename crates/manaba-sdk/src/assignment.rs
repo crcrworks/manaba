@@ -1,9 +1,18 @@
 use chrono::NaiveDateTime;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum AssignmentState {
+#[derive(Debug, PartialEq, Eq, Default)]
+pub enum AssignmentSubmitState {
+    #[default]
     Todo,
     Done,
+}
+
+#[derive(Debug, PartialEq, Eq, Default)]
+pub enum AssignmentReceptibleState {
+    #[default]
+    NotStarted,
+    Open,
+    Closed,
 }
 
 #[derive(Debug)]

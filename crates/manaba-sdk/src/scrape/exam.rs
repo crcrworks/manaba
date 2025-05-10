@@ -1,12 +1,13 @@
 use crate::Client;
-use crate::assignment::{AssignmentDate, AssignmentState};
+use crate::assignment::{AssignmentDate, AssignmentReceptibleState, AssignmentSubmitState};
 use crate::{Course, error::Result};
 use reqwest::Method;
 use scraper::Selector;
 
 pub struct Exam {
     pub title: String,
-    pub state: AssignmentState,
+    pub submit_state: AssignmentSubmitState,
+    pub receptiable_state: AssignmentReceptibleState,
     pub start_date: Option<AssignmentDate>,
     pub due_date: Option<AssignmentDate>,
 }
@@ -31,15 +32,28 @@ impl Client {
                     report_title_element.inner_html()
                 };
 
-                let state = {
+                let (receptiable_state, submit_state) = {
                     let row = rows.next().unwrap();
-                    let selector = Selector::parse("strong").unwrap();
 
-                    if row.select(&selector).next().is_some() {
-                        AssignmentState::Done
-                    } else {
-                        AssignmentState::Todo
-                    }
+                    let receptiable_state = match row.text().next().unwrap().trim() {
+                        "受付中" => AssignmentReceptibleState::Open,
+                        "受付終了" => AssignmentReceptibleState::Closed,
+                        _ => AssignmentReceptibleState::NotStarted,
+                    };
+
+                    let selector = Selector::parse("span").unwrap();
+                    let submit_state = row.select(&selector).next().map_or(
+                        AssignmentSubmitState::Done,
+                        |submit_state| {
+                            if submit_state.inner_html().trim() == "未提出" {
+                                AssignmentSubmitState::Todo
+                            } else {
+                                AssignmentSubmitState::Done
+                            }
+                        },
+                    );
+
+                    (receptiable_state, submit_state)
                 };
 
                 let start_date = {
@@ -64,7 +78,8 @@ impl Client {
 
                 Exam {
                     title,
-                    state,
+                    receptiable_state,
+                    submit_state,
                     start_date,
                     due_date,
                 }

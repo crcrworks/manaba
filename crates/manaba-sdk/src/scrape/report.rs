@@ -1,4 +1,4 @@
-use crate::assignment::{AssignmentDate, AssignmentState};
+use crate::assignment::{AssignmentDate, AssignmentReceptibleState, AssignmentSubmitState};
 use crate::error::Result;
 use crate::{Client, Course};
 use scraper::Selector;
@@ -6,7 +6,8 @@ use scraper::Selector;
 #[derive(Debug)]
 pub struct Report {
     pub title: String,
-    pub state: AssignmentState,
+    pub submit_state: AssignmentSubmitState,
+    pub receptiable_state: AssignmentReceptibleState,
     pub start_date: Option<AssignmentDate>,
     pub due_date: Option<AssignmentDate>,
 }
@@ -16,7 +17,7 @@ impl Client {
         let url = format!("{}_report", course.id);
         let html = self.get_html(reqwest::Method::GET, url).await?;
 
-        let selector = Selector::parse("table.stdlist tr:not(.title)").unwrap();
+        let selector = Selector::parse("table.stdlist tr:not(.title)")?;
         let reports_element = html.select(&selector);
 
         let reports = reports_element
@@ -31,15 +32,32 @@ impl Client {
                     report_title_element.inner_html()
                 };
 
-                let state = {
+                let (receptiable_state, submit_state) = {
                     let row = rows.next().unwrap();
-                    let selector = Selector::parse("strong").unwrap();
 
-                    if row.select(&selector).next().is_some() {
-                        AssignmentState::Done
-                    } else {
-                        AssignmentState::Todo
-                    }
+                    let selector = Selector::parse("div").unwrap();
+                    let receptiable_state = row.select(&selector).next().map_or(
+                        AssignmentReceptibleState::NotStarted,
+                        |state| match state.inner_html().as_str() {
+                            "受付中" => AssignmentReceptibleState::Open,
+                            "受付終了" => AssignmentReceptibleState::Closed,
+                            _ => AssignmentReceptibleState::NotStarted,
+                        },
+                    );
+
+                    let selector = Selector::parse("span").unwrap();
+                    let submit_state = row.select(&selector).next().map_or(
+                        AssignmentSubmitState::Done,
+                        |submit_state| {
+                            if submit_state.inner_html() == "未提出" {
+                                AssignmentSubmitState::Todo
+                            } else {
+                                AssignmentSubmitState::Done
+                            }
+                        },
+                    );
+
+                    (receptiable_state, submit_state)
                 };
 
                 let start_date = {
@@ -64,7 +82,8 @@ impl Client {
 
                 Report {
                     title,
-                    state,
+                    receptiable_state,
+                    submit_state,
                     start_date,
                     due_date,
                 }
