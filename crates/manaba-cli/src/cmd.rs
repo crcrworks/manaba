@@ -2,7 +2,7 @@ mod exam;
 mod report;
 mod timetable;
 
-use crate::APP_CONFIG;
+use crate::{APP_CONFIG, APP_CONFIG_PATH};
 use crate::{client, error::Result};
 use clap::{Parser, Subcommand};
 use colored_text::Colorize;
@@ -94,7 +94,7 @@ pub async fn cmd() -> Result<()> {
         }
 
         Commands::ConfigPath => {
-            // println!("{:?}", AppConfig::config_file_path()?);
+            println!("{:?}", APP_CONFIG_PATH.get().unwrap());
         }
     }
 
