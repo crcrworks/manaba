@@ -1,36 +1,80 @@
+mod app_config;
 mod cmd;
-mod config;
 mod error;
 
-use config::Config;
+use app_config::AppConfig;
+use config::{Config, ConfigError};
 use dialoguer::Confirm;
-use error::{Error, Result};
+use error::{Error, Result, print_err};
 use manaba_sdk::{Client, Cookie, error::ManabaError};
+use std::{io::Write as _, path::PathBuf, sync::OnceLock};
+
+static APP_CONFIG: OnceLock<AppConfig> = OnceLock::new();
+static APP_CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    APP_CONFIG_PATH.get_or_init(app_config_path);
+    APP_CONFIG.get_or_init(|| {
+        app_config().unwrap_or_else(|e| {
+            let confirmation = Confirm::new()
+                .with_prompt("Config file not found. Do you want to create a new one?")
+                .interact()
+                .unwrap();
+
+            if confirmation {
+                let path = APP_CONFIG_PATH.get().unwrap();
+                match std::fs::File::create(path) {
+                    Ok(mut file) => {
+                        let app_config = AppConfig::default();
+                        let toml = toml::to_string(&app_config).unwrap();
+                        file.write_all(toml.as_bytes()).unwrap();
+                    }
+                    Err(e) => print_err(e.to_string()),
+                }
+
+                path.to_str().inspect(|path| {
+                    println!("Config file created at {path}");
+                });
+                app_config().unwrap()
+            } else {
+                print_err(e.to_string());
+                AppConfig::default()
+            }
+        })
+    });
+
     cmd::cmd().await?;
     Ok(())
 }
 
-pub async fn config() -> Result<Config> {
-    let config = match Config::from_file().await {
-        Ok(v) => v,
-        Err(Error::ConfigFileNotFound) => {
-            let new_config = Config::default();
-            new_config.clone().save_to_file().await?;
-            new_config
-        }
-        Err(e) => return Err(e),
-    };
-    Ok(config)
+fn app_config_path() -> PathBuf {
+    let config_dir_path = dirs::config_dir().unwrap();
+    config_dir_path.join("manaba").join("settings.toml")
 }
 
-pub async fn client(config: &mut Config) -> Result<Client> {
-    loop {
-        let cookie = Cookie::load(&config.cookie_domain)?;
+fn app_config() -> Result<AppConfig> {
+    let load_config_error = |e: ConfigError| Error::LoadConfig {
+        source: e,
+        config_path: APP_CONFIG_PATH.get().unwrap().to_owned(),
+    };
 
-        match Client::new(&config.base_url, &cookie).await {
+    let config = Config::builder()
+        .add_source(config::File::from(
+            APP_CONFIG_PATH.get().unwrap().to_owned(),
+        ))
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .map_err(load_config_error)?;
+
+    config.try_deserialize().map_err(load_config_error)
+}
+
+async fn client(app_config: &AppConfig) -> Result<Client> {
+    loop {
+        let cookie = Cookie::load(&app_config.cookie_domain)?;
+
+        match Client::new(&app_config.base_url, &cookie).await {
             Ok(client) => return Ok(client),
             Err(ManabaError::InvalidCookie) => {
                 let confirmation = Confirm::new()
@@ -42,7 +86,7 @@ pub async fn client(config: &mut Config) -> Result<Client> {
                     std::process::exit(0);
                 }
 
-                opener::open(&config.base_url)?;
+                opener::open(&app_config.base_url)?;
 
                 let confirmation = Confirm::new()
                     .with_prompt("Load cookie? (Yes after opening manaba)")

@@ -1,13 +1,16 @@
 mod exam;
 mod report;
+mod timetable;
 
-use crate::{client, config, config::Config, error::Result};
+use crate::APP_CONFIG;
+use crate::{client, error::Result};
 use clap::{Parser, Subcommand};
 use colored_text::Colorize;
 use exam::exam;
 use manaba_sdk::assignment::AssignmentDate;
 use manaba_sdk::assignment::{AssignmentImportanceLevel, AssignmentReceptibleState};
 use report::report;
+use timetable::timetable;
 
 const INDENT: &str = "   ";
 
@@ -21,8 +24,10 @@ struct Cli {
 enum Commands {
     /// Open manaba page in browser
     Browse,
-    /// show manaba-cli config path
+    /// Show manaba-cli config path
     ConfigPath,
+    /// Show timetable
+    Timetable,
     /// List reports
     Report {
         #[arg(short, long)]
@@ -51,22 +56,25 @@ enum Commands {
 
 pub async fn cmd() -> Result<()> {
     let cli = Cli::parse();
+
     match cli.command {
         Commands::Report { all, warn } => {
-            let mut config = config().await?;
-            let client = client(&mut config).await?;
+            let app_config = APP_CONFIG.get().unwrap();
+            let client = client(app_config).await?;
+
             report::report(&client, all, warn).await?;
         }
 
         Commands::Exam { all, warn } => {
-            let mut config = config().await?;
-            let client = client(&mut config).await?;
+            let app_config = APP_CONFIG.get().unwrap();
+            let client = client(app_config).await?;
+
             exam(&client, all, warn).await?;
         }
 
         Commands::Check { all, warn } => {
-            let mut config = config().await?;
-            let client = client(&mut config).await?;
+            let app_config = APP_CONFIG.get().unwrap();
+            let client = client(app_config).await?;
 
             println!("============ {} ============\n", " Report ".on_white());
             report(&client, all, warn).await?;
@@ -76,12 +84,17 @@ pub async fn cmd() -> Result<()> {
         }
 
         Commands::Browse => {
-            let config = config().await?;
-            opener::open(config.base_url)?;
+            let app_config = APP_CONFIG.get().unwrap();
+            opener::open(&app_config.base_url)?;
+        }
+
+        Commands::Timetable => {
+            let app_config = APP_CONFIG.get().unwrap();
+            timetable(&app_config.timetable);
         }
 
         Commands::ConfigPath => {
-            println!("{:?}", Config::file_path()?);
+            // println!("{:?}", AppConfig::config_file_path()?);
         }
     }
 
