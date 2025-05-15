@@ -54,7 +54,7 @@ pub async fn exam(client: &Client, should_show_all: bool, should_show_warn: bool
             continue;
         }
 
-        println!("{}", course.title.black().bold().on_blue());
+        println!("{}", course.title.white().bold().on_blue());
 
         for exam in exams {
             let header_str = {

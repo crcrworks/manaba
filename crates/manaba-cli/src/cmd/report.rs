@@ -54,7 +54,7 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
             continue;
         }
 
-        println!("{}", course.title.black().bold().on_blue());
+        println!("{}", course.title.white().bold().on_blue());
 
         for report in reports {
             let header_str = {
