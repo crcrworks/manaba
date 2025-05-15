@@ -1,8 +1,11 @@
 ## Installation
+
 ```
 cargo install manaba-cli
 ```
+
 ## Usage
+
 ```sh
  manaba check        # List assignment include reports and exams
  manaba report       # List reports
@@ -11,25 +14,31 @@ cargo install manaba-cli
  manaba browse       # Open manaba page in browser
  manaba config-path  # show manaba-cli config path
 ```
+
 ### Options
 
 `--all` flag shows all contents.
+
 ```
-manaba report --warn
-```
-`--warn` flag shows assignments with approaching deadlines.
-```
-manaba report --warn
+manaba report --all
 ```
 
+`--warn` flag shows assignments with approaching deadlines.
+
+```
+manaba report --warn
+```
 
 ## Configuration
+
 Run this command to show config file path:
+
 ```
 manaba config-path
 ```
 
 default value:
+
 ```toml
 base_url = "https://ct.ritsumei.ac.jp/ct/"
 cookie_domain = "ct.ritsumei.ac.jp"
@@ -41,7 +50,7 @@ cookie_domain = "ct.ritsumei.ac.jp"
 # "4限" = "14:55 ~ 16:30"
 # "5限" = "16:40 ~ 18:15"
 # "6限" = "18:25 ~ 20:00"
-# "7限" = "20:10 ~ 21:45" 
+# "7限" = "20:10 ~ 21:45"
 
 [color]
 white = "D3C6AA",
