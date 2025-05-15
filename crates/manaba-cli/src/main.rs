@@ -1,8 +1,10 @@
 mod app_config;
 mod cmd;
+mod color;
 mod error;
 
 use app_config::AppConfig;
+use color::{APP_COLOR, AppColor};
 use config::{Config, ConfigError};
 use dialoguer::Confirm;
 use error::{Error, Result, print_err};
@@ -36,12 +38,31 @@ async fn main() -> Result<()> {
                 path.to_str().inspect(|path| {
                     println!("Config file created at {path}");
                 });
+
                 app_config().unwrap()
             } else {
                 print_err(e.to_string());
                 AppConfig::default()
             }
         })
+    });
+
+    APP_COLOR.get_or_init(|| {
+        let app_conig = APP_CONFIG.get().unwrap();
+        let color = &app_conig.color;
+
+        let mut app_color = AppColor::default();
+
+        app_color.white = color.get("white").cloned().unwrap_or(app_color.white);
+        app_color.black = color.get("black").cloned().unwrap_or(app_color.black);
+        app_color.red = color.get("red").cloned().unwrap_or(app_color.red);
+        app_color.blue = color.get("blue").cloned().unwrap_or(app_color.blue);
+        app_color.aqua = color.get("aqua").cloned().unwrap_or(app_color.aqua);
+        app_color.yellow = color.get("yellow").cloned().unwrap_or(app_color.yellow);
+        app_color.green = color.get("green").cloned().unwrap_or(app_color.green);
+        app_color.gray = color.get("gray").cloned().unwrap_or(app_color.gray);
+
+        app_color
     });
 
     cmd::cmd().await?;

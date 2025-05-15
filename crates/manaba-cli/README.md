@@ -2,8 +2,6 @@
 ```
 cargo install manaba-cli
 ```
-
-
 ## Usage
 ```sh
  manaba check        # List assignment include reports and exams
@@ -13,7 +11,6 @@ cargo install manaba-cli
  manaba browse       # Open manaba page in browser
  manaba config-path  # show manaba-cli config path
 ```
-
 ### Options
 
 `--all` flag shows all contents.
@@ -45,4 +42,14 @@ cookie_domain = "ct.ritsumei.ac.jp"
 # "5限" = "16:40 ~ 18:15"
 # "6限" = "18:25 ~ 20:00"
 # "7限" = "20:10 ~ 21:45" 
+
+[color]
+white = "D3C6AA",
+black = "272E33",
+red = "E67E80",
+blue = "7FBBB3",
+aqua = "83C092",
+yellow = "DBBC7F",
+green = "A7C080",
+gray = "4F5B58",
 ```

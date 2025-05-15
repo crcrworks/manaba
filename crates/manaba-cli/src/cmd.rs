@@ -2,10 +2,8 @@ mod exam;
 mod report;
 mod timetable;
 
-use crate::{APP_CONFIG, APP_CONFIG_PATH};
-use crate::{client, error::Result};
+use crate::{APP_CONFIG, APP_CONFIG_PATH, client, color::AppColorize as _, error::Result};
 use clap::{Parser, Subcommand};
-use colored_text::Colorize;
 use exam::exam;
 use manaba_sdk::assignment::AssignmentDate;
 use manaba_sdk::assignment::{AssignmentImportanceLevel, AssignmentReceptibleState};
@@ -76,10 +74,16 @@ pub async fn cmd() -> Result<()> {
             let app_config = APP_CONFIG.get().unwrap();
             let client = client(app_config).await?;
 
-            println!("============ {} ============\n", " Report ".on_white());
+            println!(
+                "============ {} ============\n",
+                " Report ".black().on_white()
+            );
             report(&client, all, warn).await?;
 
-            println!("============ {} ============\n", " Exam ".on_white());
+            println!(
+                "============ {} ============\n",
+                " Exam ".black().on_white()
+            );
             exam(&client, all, warn).await?;
         }
 
@@ -110,13 +114,13 @@ fn colorize<T: std::fmt::Display>(
         *receptiable_state,
         AssignmentReceptibleState::NotStarted | AssignmentReceptibleState::Closed
     ) {
-        return text.white();
+        return text.gray();
     }
 
     match importance_level {
         AssignmentImportanceLevel::High => text.red(),
         AssignmentImportanceLevel::Medium => text.yellow(),
-        AssignmentImportanceLevel::Low => text.cyan(),
+        AssignmentImportanceLevel::Low => text.aqua(),
         AssignmentImportanceLevel::None => text.to_string(),
     }
 }
@@ -130,13 +134,13 @@ fn colorize_bg<T: std::fmt::Display>(
         *receptiable_state,
         AssignmentReceptibleState::NotStarted | AssignmentReceptibleState::Closed
     ) {
-        return text.white();
+        return text.gray();
     }
 
     match importance_level {
         AssignmentImportanceLevel::High => text.on_red(),
         AssignmentImportanceLevel::Medium => text.on_yellow(),
-        AssignmentImportanceLevel::Low => text.on_cyan(),
+        AssignmentImportanceLevel::Low => text.on_aqua(),
         AssignmentImportanceLevel::None => text.to_string(),
     }
 }

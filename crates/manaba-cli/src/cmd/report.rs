@@ -1,8 +1,8 @@
+use crate::color::AppColorize as _;
 use crate::{
     cmd::{INDENT, colorize, colorize_bg, date_as_str},
     error::Result,
 };
-use colored_text::Colorize;
 use manaba_sdk::{
     Client, Report,
     assignment::{
@@ -54,7 +54,7 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
             continue;
         }
 
-        println!("{}", course.title.white().bold().on_blue());
+        println!("{}", course.title.black().on_blue().with_bold());
 
         for report in reports {
             let header_str = {
@@ -63,7 +63,7 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
                         Report {
                             receptiable_state: AssignmentReceptibleState::NotStarted,
                             ..
-                        } => " WAITING ".black().on_white(),
+                        } => " WAITING ".black().on_gray(),
 
                         Report {
                             submit_state: AssignmentSubmitState::Todo,
@@ -76,9 +76,9 @@ pub async fn report(client: &Client, should_show_all: bool, should_show_warn: bo
                             receptiable_state:
                                 AssignmentReceptibleState::Closed | AssignmentReceptibleState::Open,
                             ..
-                        } => " DONE ".cyan().on_white(),
+                        } => " DONE ".aqua().on_gray(),
 
-                        _ => " CLOSED ".black().on_white(),
+                        _ => " CLOSED ".black().on_gray(),
                     }
                 } else if let Some(due_date) = &report.due_date {
                     colorize_bg(" ", &report.receptiable_state, &due_date.importance_level)
