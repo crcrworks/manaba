@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 const DEFAULT_BASE_URL: &str = "https://ct.ritsumei.ac.jp/ct/";
 const DEFAULT_COOKIE_DOMAIN: &str = "ct.ritsumei.ac.jp";

@@ -5,7 +5,7 @@ mod error;
 
 use app_config::AppConfig;
 use color::{APP_COLOR, AppColor};
-use config::{Config, ConfigError};
+use config::Config;
 use dialoguer::Confirm;
 use error::{Error, Result, print_err};
 use manaba_sdk::{Client, Cookie, error::ManabaError};
@@ -17,34 +17,18 @@ static APP_CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
 #[tokio::main]
 async fn main() -> Result<()> {
     APP_CONFIG_PATH.get_or_init(app_config_path);
-    APP_CONFIG.get_or_init(|| {
-        app_config().unwrap_or_else(|e| {
-            let confirmation = Confirm::new()
-                .with_prompt("Config file not found. Do you want to create a new one?")
-                .interact()
-                .unwrap();
-
-            if confirmation {
-                let path = APP_CONFIG_PATH.get().unwrap();
-                match std::fs::File::create(path) {
-                    Ok(mut file) => {
-                        let app_config = AppConfig::default();
-                        let toml = toml::to_string(&app_config).unwrap();
-                        file.write_all(toml.as_bytes()).unwrap();
-                    }
-                    Err(e) => print_err(e.to_string()),
+    APP_CONFIG.get_or_init(|| match app_config() {
+        Ok(app_config) => app_config,
+        Err(e) => {
+            print_err(e.to_string());
+            match e {
+                Error::ConfigFileNotFound { .. } => {
+                    create_config_file().unwrap_or_else(|_| AppConfig::default())
                 }
-
-                path.to_str().inspect(|path| {
-                    println!("Config file created at {path}");
-                });
-
-                app_config().unwrap()
-            } else {
-                print_err(e.to_string());
-                AppConfig::default()
+                Error::ConfigFileDeserialize { .. } => AppConfig::default(),
+                _ => AppConfig::default(),
             }
-        })
+        }
     });
 
     APP_COLOR.get_or_init(|| {
@@ -75,20 +59,23 @@ fn app_config_path() -> PathBuf {
 }
 
 fn app_config() -> Result<AppConfig> {
-    let load_config_error = |e: ConfigError| Error::LoadConfig {
-        source: e,
-        config_path: APP_CONFIG_PATH.get().unwrap().to_owned(),
-    };
-
     let config = Config::builder()
         .add_source(config::File::from(
             APP_CONFIG_PATH.get().unwrap().to_owned(),
         ))
         .add_source(config::Environment::with_prefix("APP"))
         .build()
-        .map_err(load_config_error)?;
+        .map_err(|e| Error::ConfigFileNotFound {
+            source: e,
+            config_path: APP_CONFIG_PATH.get().unwrap().to_owned(),
+        })?;
 
-    config.try_deserialize().map_err(load_config_error)
+    config
+        .try_deserialize()
+        .map_err(|e| Error::ConfigFileDeserialize {
+            source: e,
+            config_path: APP_CONFIG_PATH.get().unwrap().to_owned(),
+        })
 }
 
 async fn client(app_config: &AppConfig) -> Result<Client> {
@@ -122,5 +109,31 @@ async fn client(app_config: &AppConfig) -> Result<Client> {
             }
             Err(e) => return Err(Error::from(e)),
         }
+    }
+}
+
+fn create_config_file() -> Result<AppConfig, ()> {
+    let confirmation = Confirm::new()
+        .with_prompt("Config file not found. Do you want to create a new one?")
+        .interact()
+        .unwrap();
+
+    if confirmation {
+        let path = APP_CONFIG_PATH.get().unwrap();
+
+        if let Err(e) = std::fs::File::create(path).and_then(|mut file| {
+            let app_config = AppConfig::default();
+            let toml = toml::to_string(&app_config).unwrap();
+
+            file.write_all(toml.as_bytes())
+        }) {
+            print_err(e.to_string());
+        } else if let Some(path_str) = path.to_str() {
+            println!("Config file created at {path_str}");
+        }
+
+        Ok(app_config().unwrap())
+    } else {
+        Err(())
     }
 }

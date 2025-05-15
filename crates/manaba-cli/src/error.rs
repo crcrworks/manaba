@@ -16,9 +16,17 @@ pub enum Error {
     Io(#[from] std::io::Error),
 
     #[error(
-        "Failed to load config: {source}.\n use default value for now but check config file: {config_path}"
+        "Config file not found: {source}.\n Use default value for now. Please check config file: {config_path}"
     )]
-    LoadConfig {
+    ConfigFileNotFound {
+        source: config::ConfigError,
+        config_path: PathBuf,
+    },
+
+    #[error(
+        "Failed to load config: {source}.\n Use default value for now. Please check config file: {config_path}"
+    )]
+    ConfigFileDeserialize {
         source: config::ConfigError,
         config_path: PathBuf,
     },
