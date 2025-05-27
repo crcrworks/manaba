@@ -86,7 +86,7 @@ impl<T: fmt::Display> AppColorize for T {
     }
 
     fn green(&self) -> String {
-        let green = &APP_COLOR.get_or_init(Default::default).yellow;
+        let green = &APP_COLOR.get_or_init(Default::default).green;
         self.hex(green)
     }
 
