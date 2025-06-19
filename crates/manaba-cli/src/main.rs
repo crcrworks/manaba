@@ -121,18 +121,28 @@ fn create_config_file() -> Result<AppConfig, ()> {
     if confirmation {
         let path = APP_CONFIG_PATH.get().unwrap();
 
+        // Create parent directories if they don't exist
+        if let Some(parent) = path.parent() {
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                print_err(format!("Failed to create config directory: {}", e));
+                return Err(());
+            }
+        }
+
+        let app_config = AppConfig::default();
         if let Err(e) = std::fs::File::create(path).and_then(|mut file| {
-            let app_config = AppConfig::default();
             let toml = toml::to_string(&app_config).unwrap();
 
             file.write_all(toml.as_bytes())
         }) {
             print_err(e.to_string());
-        } else if let Some(path_str) = path.to_str() {
-            println!("Config file created at {path_str}");
+            Err(())
+        } else {
+            if let Some(path_str) = path.to_str() {
+                println!("Config file created at {path_str}");
+            }
+            Ok(app_config)
         }
-
-        Ok(app_config().unwrap())
     } else {
         Err(())
     }
