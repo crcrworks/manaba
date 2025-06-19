@@ -16,41 +16,65 @@ static APP_CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    initialize_app_config();
+    initialize_app_color();
+
+    cmd::cmd().await?;
+    Ok(())
+}
+
+fn initialize_app_config() {
     APP_CONFIG_PATH.get_or_init(app_config_path);
     APP_CONFIG.get_or_init(|| match app_config() {
         Ok(app_config) => app_config,
         Err(e) => {
             print_err(e.to_string());
-            match e {
-                Error::ConfigFileNotFound { .. } => {
-                    create_config_file().unwrap_or_else(|_| AppConfig::default())
-                }
-                Error::ConfigFileDeserialize { .. } => AppConfig::default(),
-                _ => AppConfig::default(),
-            }
+            handle_config_error(e)
         }
     });
+}
 
+fn initialize_app_color() {
     APP_COLOR.get_or_init(|| {
-        let app_conig = APP_CONFIG.get().unwrap();
-        let color = &app_conig.color;
-
-        let mut app_color = AppColor::default();
-
-        app_color.white = color.get("white").cloned().unwrap_or(app_color.white);
-        app_color.black = color.get("black").cloned().unwrap_or(app_color.black);
-        app_color.red = color.get("red").cloned().unwrap_or(app_color.red);
-        app_color.blue = color.get("blue").cloned().unwrap_or(app_color.blue);
-        app_color.aqua = color.get("aqua").cloned().unwrap_or(app_color.aqua);
-        app_color.yellow = color.get("yellow").cloned().unwrap_or(app_color.yellow);
-        app_color.green = color.get("green").cloned().unwrap_or(app_color.green);
-        app_color.gray = color.get("gray").cloned().unwrap_or(app_color.gray);
-
-        app_color
+        let app_config = APP_CONFIG.get().unwrap();
+        create_app_color_from_config(&app_config.color)
     });
+}
 
-    cmd::cmd().await?;
-    Ok(())
+fn handle_config_error(error: Error) -> AppConfig {
+    match error {
+        Error::ConfigFileNotFound { .. } => {
+            create_config_file().unwrap_or_else(|_| AppConfig::default())
+        }
+        Error::ConfigFileDeserialize { .. } => AppConfig::default(),
+        _ => AppConfig::default(),
+    }
+}
+
+fn create_app_color_from_config(
+    color_config: &std::collections::HashMap<String, String>,
+) -> AppColor {
+    let mut app_color = AppColor::default();
+
+    // Use a macro to reduce repetition
+    macro_rules! set_color {
+        ($field:ident) => {
+            if let Some(color) = color_config.get(stringify!($field)) {
+                app_color.$field = color.clone();
+            }
+        };
+    }
+
+    set_color!(white);
+    set_color!(black);
+    set_color!(red);
+    set_color!(blue);
+    set_color!(aqua);
+    set_color!(yellow);
+    set_color!(green);
+    set_color!(gray);
+
+    app_color
 }
 
 fn app_config_path() -> PathBuf {
