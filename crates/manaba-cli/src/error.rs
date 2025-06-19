@@ -36,4 +36,7 @@ pub enum Error {
 
     #[error("{0}")]
     Manaba(#[from] manaba_sdk::error::ManabaError),
+
+    #[error("{0}")]
+    Dialoguer(#[from] dialoguer::Error),
 }

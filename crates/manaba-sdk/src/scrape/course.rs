@@ -8,6 +8,12 @@ pub struct Course {
     pub id: String,
 }
 
+impl Course {
+    pub fn url(&self, base_url: &str) -> String {
+        format!("{}/{}", base_url, self.id)
+    }
+}
+
 impl Client {
     pub async fn get_courses(&self) -> Result<Vec<Course>> {
         let html = self.get_html(reqwest::Method::GET, "home_course").await?;

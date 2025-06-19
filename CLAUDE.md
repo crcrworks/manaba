@@ -30,6 +30,7 @@ cargo test -p manaba-sdk  # SDK tests only
 manaba check        # List all assignments
 manaba report       # List reports only
 manaba exam         # List exams only
+manaba course       # Browse and select courses with assignment indicators (urgent/1week/normal)
 manaba timetable    # Show timetable
 manaba browse       # Open manaba in browser
 manaba config-path  # Show config file location

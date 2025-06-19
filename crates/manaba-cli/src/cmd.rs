@@ -1,9 +1,11 @@
+mod course;
 mod exam;
 mod report;
 mod timetable;
 
 use crate::{APP_CONFIG, APP_CONFIG_PATH, client, color::AppColorize as _, error::Result};
 use clap::{Parser, Subcommand};
+use course::course;
 use exam::exam;
 use manaba_sdk::assignment::AssignmentDate;
 use manaba_sdk::assignment::{AssignmentImportanceLevel, AssignmentReceptibleState};
@@ -24,6 +26,8 @@ enum Commands {
     Browse,
     /// Show manaba-cli config path
     ConfigPath,
+    /// Browse and open courses
+    Course,
     /// Show timetable
     Timetable,
     /// List reports
@@ -90,6 +94,12 @@ pub async fn cmd() -> Result<()> {
         Commands::Browse => {
             let app_config = APP_CONFIG.get().unwrap();
             opener::open(&app_config.base_url)?;
+        }
+
+        Commands::Course => {
+            let app_config = APP_CONFIG.get().unwrap();
+            let client = client(app_config).await?;
+            course(&client).await?;
         }
 
         Commands::Timetable => {
