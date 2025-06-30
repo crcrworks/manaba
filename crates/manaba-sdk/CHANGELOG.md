@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.5.1] - 2025-06-30
+### Changed
+- Improved assignment priority logic: High priority now starts from 3 days before deadline (previously 1 day)
+
 ## [0.5.0] - 2025-01-19
 ### Added
 - Add `Course::url()` method to generate course URLs

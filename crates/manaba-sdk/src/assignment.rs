@@ -50,10 +50,10 @@ impl From<NaiveDateTime> for AssignmentImportanceLevel {
         if due_date < today {
             AssignmentImportanceLevel::None
         } else {
-            let tomorrow = today + chrono::Duration::days(1);
+            let three_days_later = today + chrono::Duration::days(3);
             let one_week_later = today + chrono::Duration::days(7);
 
-            if due_date <= tomorrow {
+            if due_date <= three_days_later {
                 AssignmentImportanceLevel::High
             } else if due_date <= one_week_later {
                 AssignmentImportanceLevel::Medium

@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.9.1] - 2025-06-30
+### Changed
+- Updated dependency: manaba-sdk from 0.5.0 to 0.5.1
+- Improved assignment priority logic through SDK update
+
 ## [0.9.0] - 2025-01-19
 ### Added
 - New `manaba course` command for interactive course selection
